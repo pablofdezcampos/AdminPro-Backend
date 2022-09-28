@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 
 const User = require('../model/users.model');
 const { generateJWT } = require('../helpers/jwt');
+const { googleVerify } = require('../helpers/google-verify');
 
 const login = async(req, res = response) => {
 
@@ -46,6 +47,50 @@ const login = async(req, res = response) => {
     }
 }
 
+const googleSignIn = async(req, res = response) => {
+
+    try{
+        const {email, name, picture} = await googleVerify(req.body.token);
+
+        //Include the user for google in the collection of users
+        const userDB = await User.findOne({email});
+        let user;
+
+        //Check if an user with that email exists, if not, includes in the collection
+        if(!userDB){
+            user = new User({
+                name: name,
+                email: email,
+                password: '@@@',
+                img: picture,
+                google: true
+            });
+        } else {
+            user = userDB;
+            user.google = true;
+        }
+
+        //Save user
+        await user.save();
+
+        //Generation of token
+        const token = await generateJWT(user.id);
+
+        res.json({
+            ok: true,
+            email, name, picture,
+            token
+        });
+        
+    } catch(err) {
+        res.status(400).json({
+            ok: false,
+            msg: 'The token is not correct'
+        });
+    }
+}
+
 module.exports = {
-    login
+    login,
+    googleSignIn
 }
