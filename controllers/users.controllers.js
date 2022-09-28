@@ -7,16 +7,34 @@ const { generateJWT } = require('../helpers/jwt');
 
 const getUsers = async(req, res) => {
 
-    const users = await User.find();
-    
+    //From = pagination
+    const from = req.query.from || 0;
+
     //To make filters
     //const users = await User.find({}, 'name email role google');
 
+    /*const users = await User.find()
+                            .skip(from)
+                            .limit(5);
+
+    //Number of indexes values in database (number of registers)
+    const total = await User.count();*/
+    
+    //Promise to resolve
+    const [users, total] = await Promise.all([
+        User.find({}, 'name email role img')
+            .skip(from)
+            .limit(5),
+
+        User.count()   
+    ]);
+    
     res.json({
         ok: true,
         users,
-        id: req.id
-    })
+        id: req.id,
+        total
+    });
 }
 
 const createUser = async(req, res = response) => {
