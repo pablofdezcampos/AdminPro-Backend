@@ -16,9 +16,9 @@ const getMedicals = async(req, res = response) => {
 
 const createMedicals = async(req, res = response) => {
 
-    const id = req.id;
+    const uid = req.id;
     const medical = new Medical({
-        user: id,
+        user: uid,
         ...req.body
     })
 
@@ -39,18 +39,70 @@ const createMedicals = async(req, res = response) => {
     }
 }
 
-const updateMedicals = (req, res = response) => {
-    res.json({
-        ok: true,
-        msg: 'Medicals Update'
-    });
+const updateMedicals = async(req, res = response) => {
+
+    const id = req.params.id;
+    const uid = req.id;
+
+    try{
+
+        const medical = await Medical.findById(id);
+        
+        if(!medical){
+            return res.status(404).json({
+                ok: false,
+                msg: 'The medical does not exist'
+            });
+        }
+
+        const changesMedical = {
+            ...req.body,
+            user: uid
+        }
+
+        const updateMedical = await Medical.findByIdAndUpdate(id, changesMedical, {new: true});
+
+        res.json({
+            oK: true,
+            updateMedical
+        });
+
+    }catch(err){
+        
+        res.json({
+            oK: false,
+            err: 'ERROR'
+        })
+    }
 }
 
-const deleteMedicals = (req, res = response) => {
-    res.json({
-        ok: true,
-        msg: 'Medicals Delete'
-    });
+const deleteMedicals = async(req, res = response) => {
+   
+    const id = req.params.id;
+
+    try{
+        const medicalDB = await Medical.findById(id);
+
+        if(!medicalDB){
+            res.status(404).json({
+                ok: false,
+                msg: 'The medical does not exist'
+            });
+        }
+
+        await Medical.findByIdAndDelete(id);
+
+        res.json({
+            ok: true,
+            msg: 'The medical was remove sucessfuly'
+        });
+
+    } catch(err){
+        res.status(500).json({
+            ok: false,
+            err
+        })
+    }
 }
 
 module.exports = {
